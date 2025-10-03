@@ -81,4 +81,4 @@ MIT
 
 ---
 
-For any issues or suggestions, please open an issue or contact the maintainer.
+For any issues or suggestions, please open an issue or contact the rithiragul2020@gmail.com.
