@@ -8,31 +8,40 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="../js/biller.js"></script>
 </head>
-<body class="container mt-4">
-  <h2 class="mb-3">Biller Details</h2>
-  <form id="billerForm" enctype="multipart/form-data" autocomplete="off">
-    <div class="row mb-3">
-      <div class="col-md-6 mb-2">
-        <label for="companyName" class="form-label">Company Name</label>
-        <input id="companyName" name="companyName" class="form-control" placeholder="Enter company name" required>
+
+<body>
+  <!-- Navbar loaded from separate file -->
+  <div id="navbar-placeholder"></div>
+
+  <div class="container mt-4">
+    <h2 class="mb-3">Biller Details</h2>
+    <form id="billerForm" enctype="multipart/form-data" autocomplete="off">
+      <div class="row mb-3">
+        <div class="col-md-6 mb-2">
+          <label for="companyName" class="form-label">Company Name</label>
+          <input id="companyName" name="companyName" class="form-control" placeholder="Enter company name" required>
+        </div>
+        <div class="col-md-6 mb-2">
+          <label for="gstNumber" class="form-label">GST Number</label>
+          <input id="gstNumber" name="gstNumber" class="form-control" placeholder="Enter GST number" required>
+        </div>
       </div>
-      <div class="col-md-6 mb-2">
-        <label for="gstNumber" class="form-label">GST Number</label>
-        <input id="gstNumber" name="gstNumber" class="form-control" placeholder="Enter GST number" required>
+      <div class="row mb-3">
+        <div class="col-md-6 mb-2">
+          <label for="hsnNumber" class="form-label">HSN Number</label>
+          <input id="hsnNumber" name="hsnNumber" class="form-control" placeholder="Enter HSN number" required>
+        </div>
+        <div class="col-md-6 mb-2">
+          <label for="logo" class="form-label">Company Logo</label>
+          <input id="logo" name="logo" type="file" accept="image/*" class="form-control">
+          <div id="logoPreview" class="mt-2"></div>
+        </div>
       </div>
-    </div>
-    <div class="row mb-3">
-      <div class="col-md-6 mb-2">
-        <label for="hsnNumber" class="form-label">HSN Number</label>
-        <input id="hsnNumber" name="hsnNumber" class="form-control" placeholder="Enter HSN number" required>
-      </div>
-      <div class="col-md-6 mb-2">
-        <label for="logo" class="form-label">Company Logo</label>
-        <input id="logo" name="logo" type="file" accept="image/*" class="form-control">
-        <div id="logoPreview" class="mt-2"></div>
-      </div>
-    </div>
-    <button type="submit" class="btn btn-success">Save Biller Details</button>
-  </form>
+      <button type="submit" class="btn btn-success">Save Biller Details</button>
+    </form>
+  </div>
+
+<script src="../js/nav.js"></script>
+
 </body>
 </html>

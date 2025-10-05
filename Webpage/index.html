@@ -3,95 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <title>Billing Software</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="../js/index.js"></script>
   <script src="../js/bill_print.js"></script>
+  <script src="../js/index.js"></script>
 </head>
-<body class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Billing Software</h2>
-    <a href="biller.html" title="Biller Details" id="billerIconLink">
-      <img id="billerIcon"
-           src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/person-circle.svg"
-           alt="Biller" style="width:40px;height:40px;border-radius:50%;">
-    </a>
-  </div>
-  <div class="mb-3">
-    <a href="customer.html" class="btn btn-info">View Customers</a>
-    <a href="bill.html" class="btn btn-warning">View Bills</a>
-  </div>
 
-  <!-- Customer Form -->
-  <div class="card p-3 mb-3">
-    <h4>Customer Details</h4>
-    <form id="customerForm" autocomplete="off">
-      <div class="row mb-2">
-        <div class="col-md-6 mb-2">
-          <label for="custName" class="form-label">Name</label>
-          <input id="custName" class="form-control" placeholder="Enter customer name">
-          <div id="custSuggestions" class="list-group"></div>
+<body>
+  <!-- Navbar loaded from separate file -->
+  <div id="navbar-placeholder"></div>
+
+  <div class="container">
+    <!-- Customer Form -->
+    <div class="card p-4 mb-4">
+      <h4 class="mb-3">Customer Details</h4>
+      <form id="customerForm" autocomplete="off">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="custName" class="form-label">Name</label>
+            <input id="custName" class="form-control" placeholder="Enter customer name">
+            <div id="custSuggestions" class="list-group"></div>
+          </div>
+          <div class="col-md-4">
+            <label for="custPhone" class="form-label">Phone</label>
+            <input id="custPhone" class="form-control" placeholder="Enter phone number">
+          </div>
+          <div class="col-md-4">
+            <label for="custEmail" class="form-label">Email</label>
+            <input id="custEmail" class="form-control" placeholder="Enter email">
+          </div>
         </div>
-        <div class="col-md-6 mb-2">
-          <label for="custPhone" class="form-label">Phone</label>
-          <input id="custPhone" class="form-control" placeholder="Enter phone number">
+        <div class="row g-3 mt-2">
+          <div class="col-md-4">
+            <label for="custGST" class="form-label">GST No</label>
+            <input id="custGST" class="form-control" placeholder="Enter GST number">
+          </div>
+          <div class="col-md-8">
+            <label for="custAddress" class="form-label">Address</label>
+            <input id="custAddress" class="form-control" placeholder="Enter address">
+          </div>
         </div>
+      </form>
+    </div>
+
+    <!-- Bill Items Table -->
+    <div class="card p-4 mb-4">
+      <h4 class="mb-3">Bill Items</h4>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Product ID</th>
+              <th>Name</th>
+              <th>Qty</th>
+              <th>Tax %</th>
+              <th>Price</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="billBody">
+            <tr>
+              <td><input type="text" class="form-control pid" required></td>
+              <td><input type="text" class="form-control pname" required></td>
+              <td><input type="number" class="form-control qty" required></td>
+              <td><input type="number" class="form-control item-tax" placeholder="Tax %" required></td>
+              <td><input type="number" class="form-control price" required></td>
+              <td><button type="button" class="btn btn-danger btn-sm removeRow">X</button></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="row mb-2">
-        <div class="col-md-4 mb-2">
-          <label for="custGST" class="form-label">GST No</label>
-          <input id="custGST" class="form-control" placeholder="Enter GST number">
-        </div>
-        <div class="col-md-4 mb-2">
-          <label for="custEmail" class="form-label">Email</label>
-          <input id="custEmail" class="form-control" placeholder="Enter email">
-        </div>
-        <div class="col-md-4 mb-2">
-          <label for="custAddress" class="form-label">Address</label>
-          <input id="custAddress" class="form-control" placeholder="Enter address">
-        </div>
-      </div>
-    </form>
+      <button id="addRow" class="btn btn-secondary mb-2">Add Item</button>
+    </div>
+
+    <!-- Generate Bill Button -->
+    <div class="mb-4 text-end">
+      <button id="generateBill" class="btn btn-success btn-lg">Generate Bill</button>
+    </div>
+
+    <!-- Bill Summary -->
+    <div class="card p-4 mb-4" id="billSummary" style="display:none;">
+      <h4 class="mb-3">Bill Summary</h4>
+      <div id="billContent"></div>
+      <button id="printBill" class="btn btn-primary mt-3" style="display:none;">Print Bill</button>
+    </div>
   </div>
 
-  <!-- Bill Items Table -->
-  <div class="card p-3 mb-3">
-    <h4>Bill Items</h4>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Product ID</th>
-          <th>Name</th>
-          <th>Qty</th>
-          <th>Tax %</th>
-          <th>Price</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="billBody">
-        <tr>
-          <td><input type="text" class="form-control pid" required></td>
-          <td><input type="text" class="form-control pname" required></td>
-          <td><input type="number" class="form-control qty" required></td>
-          <td><input type="number" class="form-control item-tax" placeholder="Tax %" required></td>
-          <td><input type="number" class="form-control price" required></td>
-          <td><button type="button" class="btn btn-danger btn-sm removeRow">X</button></td>
-        </tr>
-      </tbody>
-    </table>
-    <button id="addRow" class="btn btn-secondary mb-2">Add Item</button>
-  </div>
+  <script src="../js/nav.js"></script>
 
-  <!-- Generate Bill Button -->
-  <div class="mb-3">
-    <button id="generateBill" class="btn btn-success">Generate Bill</button>
-  </div>
-
-  <!-- Bill Summary -->
-  <div class="card p-3 mb-3" id="billSummary" style="display:none;">
-    <div id="billContent"></div>
-    <button id="printBill" class="btn btn-primary mt-2" style="display:none;">Print Bill</button>
-  </div>
 </body>
 </html>

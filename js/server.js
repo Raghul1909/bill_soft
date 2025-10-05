@@ -147,6 +147,9 @@ app.get('/api/biller', (req, res) => {
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../Webpage/index.html'));
 });
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../Webpage/index.html'));
+});
 app.get('/customer.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../Webpage/customer.html'));
 });
@@ -155,6 +158,9 @@ app.get('/bill.html', (req, res) => {
 });
 app.get('/biller.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../Webpage/biller.html'));
+});
+app.get('/navbar.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../Webpage/navbar.html'));
 });
 
 app.listen(3000, () => {
