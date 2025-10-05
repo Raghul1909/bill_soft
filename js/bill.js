@@ -1,13 +1,16 @@
 $(document).ready(function () {
   let allBills = [];
   let allCustomers = [];
+  let billerData = {};
   let currentSort = { key: 'id', asc: true };
 
-  // Fetch both bills and customers
+  // Fetch biller, bills, and customers
   Promise.all([
+    fetch('/api/biller').then(res => res.json()),
     fetch('/api/bills').then(res => res.json()),
     fetch('/api/customers').then(res => res.json())
-  ]).then(([bills, customers]) => {
+  ]).then(([biller, bills, customers]) => {
+    billerData = biller;
     allBills = bills;
     allCustomers = customers;
     renderBills(allBills, allCustomers);
@@ -59,8 +62,16 @@ $(document).ready(function () {
       // Unique print content id for each bill
       const printId = `printBill${bill.id}`;
 
+      // Use renderBillSummary from bill_print.js for print content
+      const printHtml = renderBillSummary(
+        billerData,
+        { name: custName, gst: custGST, address: custAddress, phone: cust.phone || '', email: cust.email || '' },
+        items,
+        bill
+      );
+
       let itemsHtml = (items || []).map(item =>
-        `${item.pname} (x${item.qty}) @ ₹${item.price} + ${item.taxPercent}%`
+        `${item.pname} `
       ).join('<br>');
 
       $('#billBody').append(`
@@ -68,8 +79,6 @@ $(document).ready(function () {
           <td>${bill.id}</td>
           <td>${bill.customerId}</td>
           <td>${bill.date ? new Date(bill.date).toLocaleString() : ''}</td>
-          <td>₹${(typeof bill.total === 'number' ? bill.total.toFixed(2) : '0.00')}</td>
-          <td>₹${(typeof bill.totalTax === 'number' ? bill.totalTax.toFixed(2) : '0.00')}</td>
           <td>₹${(typeof bill.finalAmount === 'number' ? bill.finalAmount.toFixed(2) : '0.00')}</td>
           <td>${itemsHtml}</td>
           <td>
@@ -81,41 +90,7 @@ $(document).ready(function () {
             <button class="btn btn-primary btn-sm printBill" data-printid="${printId}">Print</button>
             <button class="btn btn-danger btn-sm deleteBill" data-id="${bill.id}">Delete</button>
             <div id="${printId}" style="display:none;">
-              <h3>Bill #${bill.id}</h3>
-              <strong>Date:</strong> ${bill.date ? new Date(bill.date).toLocaleString() : ''}<br>
-              <strong>Customer:</strong> ${custName}<br>
-              <strong>GST:</strong> ${custGST}<br>
-              <strong>Address:</strong> ${custAddress}<br>
-              <hr>
-              <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
-                <thead>
-                  <tr>
-                    <th style="border-bottom:1px solid #000;text-align:left;">Name</th>
-                    <th style="border-bottom:1px solid #000;text-align:right;">Qty</th>
-                    <th style="border-bottom:1px solid #000;text-align:right;">Tax %</th>
-                    <th style="border-bottom:1px solid #000;text-align:right;">Price</th>
-                    <th style="border-bottom:1px solid #000;text-align:right;">Item Total</th>
-                    <th style="border-bottom:1px solid #000;text-align:right;">Item Tax</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${
-                    (items || []).map(item => `
-                      <tr>
-                        <td>${item.pname}</td>
-                        <td style="text-align:right;">${item.qty}</td>
-                        <td style="text-align:right;">${item.taxPercent}%</td>
-                        <td style="text-align:right;">₹${item.price}</td>
-                        <td style="text-align:right;">₹${(item.qty * item.price).toFixed(2)}</td>
-                        <td style="text-align:right;">₹${((item.qty * item.price) * (item.taxPercent / 100)).toFixed(2)}</td>
-                      </tr>
-                    `).join('')
-                  }
-                </tbody>
-              </table>
-              <strong>Total:</strong> ₹${(typeof bill.total === 'number' ? bill.total.toFixed(2) : '0.00')}<br>
-              <strong>Total Tax:</strong> ₹${(typeof bill.totalTax === 'number' ? bill.totalTax.toFixed(2) : '0.00')}<br>
-              <strong>Final Amount:</strong> ₹${(typeof bill.finalAmount === 'number' ? bill.finalAmount.toFixed(2) : '0.00')}<br>
+              ${printHtml}
             </div>
           </td>
         </tr>
@@ -150,15 +125,10 @@ $(document).ready(function () {
       });
   });
 
-  // Print handler
+  // Print handler using printBill from bill_print.js
   $('#billBody').on('click', '.printBill', function () {
     const printId = $(this).data('printid');
-    const printContents = document.getElementById(printId).innerHTML;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    location.reload();
+    printBill(printId);
   });
 
   // Sort handler

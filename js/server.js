@@ -36,6 +36,17 @@ db.serialize(() => {
     db.run(`UPDATE sqlite_sequence SET seq = 10000 WHERE name = 'bills'`);
 });
 
+// Create biller table if not exists
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS biller (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        companyName TEXT,
+        gstNumber TEXT,
+        hsnNumber TEXT,
+        logo TEXT
+    )`);
+});
+
 // Add customer
 app.post('/api/customers', (req, res) => {
     const { name, phone, gst, address, email } = req.body;
@@ -96,6 +107,42 @@ app.delete('/api/bills/:id', (req, res) => {
     });
 });
 
+// Save biller details
+app.post('/api/biller', (req, res) => {
+    const { companyName, gstNumber, hsnNumber, logo } = req.body;
+    // Only one biller record, so upsert (insert or update)
+    db.get(`SELECT id FROM biller LIMIT 1`, [], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (row) {
+            db.run(
+                `UPDATE biller SET companyName=?, gstNumber=?, hsnNumber=?, logo=? WHERE id=?`,
+                [companyName, gstNumber, hsnNumber, logo, row.id],
+                function (err2) {
+                    if (err2) return res.status(500).json({ error: err2.message });
+                    res.json({ success: true, updated: true });
+                }
+            );
+        } else {
+            db.run(
+                `INSERT INTO biller (companyName, gstNumber, hsnNumber, logo) VALUES (?, ?, ?, ?)`,
+                [companyName, gstNumber, hsnNumber, logo],
+                function (err2) {
+                    if (err2) return res.status(500).json({ error: err2.message });
+                    res.json({ success: true, inserted: true });
+                }
+            );
+        }
+    });
+});
+
+// Get biller details
+app.get('/api/biller', (req, res) => {
+    db.get(`SELECT * FROM biller LIMIT 1`, [], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(row || {});
+    });
+});
+
 // Serve HTML pages
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../Webpage/index.html'));
@@ -105,6 +152,9 @@ app.get('/customer.html', (req, res) => {
 });
 app.get('/bill.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../Webpage/bill.html'));
+});
+app.get('/biller.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../Webpage/biller.html'));
 });
 
 app.listen(3000, () => {

@@ -76,112 +76,83 @@ $(document).ready(function () {
 
     // Collect bill items
     const items = [];
-    let valid = true;
-    let total = 0;
-    let totalTax = 0;
+    let total = 0, totalTax = 0;
     $('#billBody tr').each(function () {
-      const pid = $(this).find('.pid').val().trim();
-      const pname = $(this).find('.pname').val().trim();
-      const qty = parseFloat($(this).find('.qty').val());
-      const price = parseFloat($(this).find('.price').val());
+      const pname = $(this).find('.pname').val();
+      const qty = parseFloat($(this).find('.qty').val()) || 0;
       const taxPercent = parseFloat($(this).find('.item-tax').val()) || 0;
-      if (!pid || !pname || isNaN(qty) || isNaN(price) || isNaN(taxPercent) || qty <= 0 || price <= 0) {
-        valid = false;
+      const price = parseFloat($(this).find('.price').val()) || 0;
+      if (pname && qty && price) {
+        const itemTotal = qty * price;
+        const itemTax = itemTotal * (taxPercent / 100);
+        total += itemTotal;
+        totalTax += itemTax;
+        items.push({ pname, qty, taxPercent, price, itemTotal, itemTax });
       }
-      const itemTotal = qty * price;
-      const itemTax = itemTotal * (taxPercent / 100);
-      total += itemTotal;
-      totalTax += itemTax;
-      items.push({ pid, pname, qty, price, taxPercent, itemTotal, itemTax });
     });
-    if (!valid || items.length === 0) {
-      alert('Please fill all required bill item fields with valid numbers.');
+
+    if (items.length === 0) {
+      alert('Please add at least one bill item.');
       return;
     }
-    const finalAmount = total + totalTax;
 
-    // Save customer first, get customerId (avoid duplicates)
+    const finalAmount = total + totalTax;
+    const bill = {
+      total,
+      totalTax,
+      finalAmount,
+      date: new Date().toISOString(),
+      customerId: null // Set after saving bill if needed
+    };
+
+    // 1. Save customer to DB
     let customerId;
     try {
-      const custRes = await fetch('/api/customers');
-      const customers = await custRes.json();
-      let existing = customers.find(c =>
-        c.gst === customer.gst
-      );
-      if (existing) {
-        customerId = existing.id;
-      } else {
-        const addRes = await fetch('/api/customers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(customer)
-        });
-        const addData = await addRes.json();
-        customerId = addData.id;
-      }
+      const custRes = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customer)
+      });
+      const custData = await custRes.json();
+      customerId = custData.id || custData.customerId || custData.insertId;
+      bill.customerId = customerId;
     } catch (err) {
       alert('Error saving customer!');
       return;
     }
 
-    // Save bill
-    const bill = {
-      customerId,
-      items,
-      total,
-      totalTax,
-      finalAmount,
-      date: new Date().toISOString()
-    };
+    // 2. Save bill to DB
     try {
-      await fetch('/api/bills', {
+      const billRes = await fetch('/api/bills', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bill)
+        body: JSON.stringify({
+          customerId,
+          date: bill.date,
+          total: bill.total,
+          tax: bill.totalTax,
+          finalAmount: bill.finalAmount,
+          items
+        })
       });
+      const billData = await billRes.json();
+      bill.id = billData.id || billData.billId || billData.insertId;
     } catch (err) {
       alert('Error saving bill!');
       return;
     }
 
-    // Show bill summary
-    let itemsHtml = `<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
-      <thead>
-        <tr>
-          <th style="border-bottom:1px solid #000;text-align:left;">Name</th>
-          <th style="border-bottom:1px solid #000;text-align:right;">Qty</th>
-          <th style="border-bottom:1px solid #000;text-align:right;">Tax %</th>
-          <th style="border-bottom:1px solid #000;text-align:right;">Price</th>
-          <th style="border-bottom:1px solid #000;text-align:right;">Item Total</th>
-          <th style="border-bottom:1px solid #000;text-align:right;">Item Tax</th>
-        </tr>
-      </thead>
-      <tbody>`;
-    items.forEach(item => {
-      itemsHtml += `<tr>
-        <td>${item.pname}</td>
-        <td style="text-align:right;">${item.qty}</td>
-        <td style="text-align:right;">${item.taxPercent}%</td>
-        <td style="text-align:right;">₹${item.price}</td>
-        <td style="text-align:right;">₹${item.itemTotal.toFixed(2)}</td>
-        <td style="text-align:right;">₹${item.itemTax.toFixed(2)}</td>
-      </tr>`;
-    });
-    itemsHtml += `</tbody></table>`;
+    // Get biller details
+    let biller = {};
+    try {
+      const billerRes = await fetch('/api/biller');
+      biller = await billerRes.json();
+    } catch (err) {
+      biller = {};
+    }
 
-    $('#billContent').html(`
-      <strong>Bill Number:</strong> ${bill.customerId ? (bill.customerId + 10000) : ''}<br>
-      <strong>Date:</strong> ${bill.date ? new Date(bill.date).toLocaleString() : new Date().toLocaleString()}<br>
-      <strong>Customer:</strong> ${customer.name}<br>
-      <strong>Phone:</strong> ${customer.phone}<br>
-      <strong>GST:</strong> ${customer.gst}<br>
-      <strong>Address:</strong> ${customer.address}<br>
-      ${itemsHtml}
-      <strong>Total:</strong> ₹${total.toFixed(2)}<br>
-      <strong>Total Tax:</strong> ₹${totalTax.toFixed(2)}<br>
-      <strong>Final Amount:</strong> ₹${finalAmount.toFixed(2)}
-    `);
-
+    // Render bill summary using bill_print.js
+    $('#billContent').html(renderBillSummary(biller, customer, items, bill));
     $('#billSummary').show();
     $('#printBill').show();
 
@@ -194,13 +165,17 @@ $(document).ready(function () {
     $("#billBody").empty();
   });
 
-  // Print Bill
+  // Print Bill button
   $('#printBill').click(function () {
-    var printContents = document.getElementById('billContent').innerHTML;
-    var originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    location.reload();
+    printBill('billContent');
+  });
+
+  // Show biller logo as user icon if available
+  $(function() {
+    $.get('/api/biller', function(data) {
+      if (data && data.logo) {
+        $('#billerIcon').attr('src', data.logo);
+      }
+    });
   });
 });

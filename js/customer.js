@@ -1,18 +1,17 @@
 $(document).ready(function () {
-  let customers = [];
+  let allCustomers = [];
   let currentSort = { key: 'id', asc: true };
 
-  // Load customers from server
-  function loadCustomers() {
-    fetch('/api/customers')
-      .then(res => res.json())
-      .then(data => {
-        customers = data;
-        renderCustomers();
-      });
-  }
+  // Fetch customers
+  fetch('/api/customers')
+    .then(res => res.json())
+    .then(customers => {
+      allCustomers = customers;
+      renderCustomers(allCustomers);
+    });
 
-  function renderCustomers() {
+  // Render customers with optional search
+  function renderCustomers(customers, search = '') {
     let sorted = [...customers];
     sorted.sort((a, b) => {
       let valA = a[currentSort.key] || '';
@@ -23,19 +22,20 @@ $(document).ready(function () {
       if (valA > valB) return currentSort.asc ? 1 : -1;
       return 0;
     });
+
     $('#customerBody').empty();
     sorted.forEach(cust => {
+      const searchStr = `${cust.id} ${cust.name} ${cust.phone} ${cust.gst} ${cust.address} ${cust.email}`.toLowerCase();
+      if (search && !searchStr.includes(search.toLowerCase())) return;
       $('#customerBody').append(`
         <tr>
           <td>${cust.id}</td>
           <td>${cust.name}</td>
           <td>${cust.phone}</td>
-          <td>${cust.gst}</td>
-          <td>${cust.address}</td>
-          <td>${cust.email}</td>
-          <td>
-            <button class="btn btn-danger btn-sm deleteCustomer" data-id="${cust.id}">Delete</button>
-          </td>
+          <td>${cust.gst || ''}</td>
+          <td>${cust.address || ''}</td>
+          <td>${cust.email || ''}</td>
+          <td><button class="btn btn-danger btn-sm deleteCustomer" data-id="${cust.id}">Delete</button></td>
         </tr>
       `);
     });
@@ -47,14 +47,18 @@ $(document).ready(function () {
       .addClass(currentSort.asc ? 'fa-sort-up' : 'fa-sort-down');
   }
 
-  loadCustomers();
+  // Search handler
+  $('#customerSearch').on('input', function () {
+    const search = $(this).val();
+    renderCustomers(allCustomers, search);
+  });
 
-  // Delete customer handler
+  // Delete handler
   $('#customerBody').on('click', '.deleteCustomer', function () {
     const id = $(this).data('id');
     fetch(`/api/customers/${id}`, { method: 'DELETE' })
       .then(res => {
-        if (res.ok) loadCustomers();
+        if (res.ok) location.reload();
         else alert('Failed to delete customer');
       });
   });
@@ -68,6 +72,7 @@ $(document).ready(function () {
       currentSort.key = key;
       currentSort.asc = true;
     }
-    renderCustomers();
+    const search = $('#customerSearch').val();
+    renderCustomers(allCustomers, search);
   });
 });
