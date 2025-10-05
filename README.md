@@ -11,29 +11,6 @@ A simple web-based billing and customer management system built with Node.js, Ex
 - Customer name suggestions for quick entry
 - Responsive UI with Bootstrap
 
-## Project Structure
-
-```
-css/
-  style.css
-DB/
-  billing.db
-  readme.md
-js/
-  app.js
-  bill.js
-  customer.js
-  db.js
-  index.js
-  server.js
-Webpage/
-  bill.html
-  customer.html
-  index.html
-.gitignore
-package.json
-```
-
 ## Getting Started
 
 ### Prerequisites
